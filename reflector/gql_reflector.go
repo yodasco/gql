@@ -13,9 +13,31 @@ const (
 	GqlExcludeTagName = "gqlexclude"
 )
 
-// ReflectGqlType returns a Graphql type that represents
-// the go reflect.Type (recorsively)
-func ReflectGqlType(name GqlName, t reflect.Type, typeMap TypeMap, exclude ExcludeFieldTag) graphql.Type {
+// ReflectType is a shorthand method for invoking ReflectTypeFq.
+// It derives the most basic fields from the given instance (typically a struct)
+// such as the name of the struct, and uses the default type mapping and no
+// exclude tags at all.
+func ReflectType(instance interface{}) graphql.Type {
+	if instance == nil {
+		panic("Cannot infer type of nil instance")
+	}
+	t := reflect.TypeOf(instance)
+	return ReflectTypeFq(
+		GqlName(t.Name()),
+		t,
+		GetDefaultTypeMap(),
+		ExcludeFieldTag(""),
+	)
+}
+
+// ReflectTypeFq (Reflect Type Fully Qualified) returns a Graphql type that
+// represents the go reflect.Type structure (recorsively)
+func ReflectTypeFq(
+	name GqlName,
+	t reflect.Type,
+	typeMap TypeMap,
+	exclude ExcludeFieldTag,
+) graphql.Type {
 	gqlType := getGqlType(t, typeMap)
 	if gqlType != nil {
 		return gqlType
@@ -48,7 +70,7 @@ func ReflectGqlType(name GqlName, t reflect.Type, typeMap TypeMap, exclude Exclu
 			Fields: fields,
 		})
 	case reflect.Slice, reflect.Array:
-		return graphql.NewList(ReflectGqlType(name, t.Elem(), typeMap, exclude))
+		return graphql.NewList(ReflectTypeFq(name, t.Elem(), typeMap, exclude))
 	case reflect.Invalid:
 		panic(fmt.Sprintf("Invalid GQL kind %s. Field: %s", t.Kind(), t.Name()))
 	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer:
@@ -61,7 +83,7 @@ func ReflectGqlType(name GqlName, t reflect.Type, typeMap TypeMap, exclude Exclu
 // ReflectGqlField returns a Graphql field that represents
 // the go reflect.Field (recorsively)
 func ReflectGqlField(name GqlName, t reflect.Type, typeMap TypeMap, exclude ExcludeFieldTag) *graphql.Field {
-	gqlType := ReflectGqlType(name, t, typeMap, exclude)
+	gqlType := ReflectTypeFq(name, t, typeMap, exclude)
 	resolver := getResolver(t, typeMap)
 	return &graphql.Field{
 		Name:    string(name),

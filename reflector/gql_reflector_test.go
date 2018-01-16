@@ -15,7 +15,7 @@ import (
 
 func TestBasicType(t *testing.T) {
 	val := 6
-	gqlt := ReflectGqlType("a", reflect.TypeOf(val), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	gqlt := ReflectTypeFq("a", reflect.TypeOf(val), GetDefaultTypeMap(), ExcludeFieldTag(""))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -28,7 +28,7 @@ func TestBasicType(t *testing.T) {
 func TestStringKind(t *testing.T) {
 	type stringKind string
 	s := stringKind("sss")
-	gqlt := ReflectGqlType("a", reflect.TypeOf(s), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	gqlt := ReflectTypeFq("a", reflect.TypeOf(s), GetDefaultTypeMap(), ExcludeFieldTag(""))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -42,7 +42,7 @@ func TestSimpleStruct(t *testing.T) {
 		A string `json:"a"`
 	}
 
-	gqlt := ReflectGqlType("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	gqlt := ReflectTypeFq("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -54,6 +54,22 @@ func TestSimpleStruct(t *testing.T) {
 	assertQuery(t, f, "s", "{a}", `{"data":{"s":{"a":"hello world"}}}`, "")
 }
 
+func TestSimpleDefaultReflectType(t *testing.T) {
+	type S struct {
+		A string `json:"a"`
+	}
+
+	gqlt := ReflectType(S{})
+	f := graphql.Field{
+		Type: gqlt,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			return S{
+				A: "hello world",
+			}, nil
+		},
+	}
+	assertQuery(t, f, "s", "{a}", `{"data":{"s":{"a":"hello world"}}}`, "")
+}
 func TestExclude(t *testing.T) {
 	type S struct {
 		A string `json:"a" gqlexclude:"ignore"`
@@ -61,7 +77,7 @@ func TestExclude(t *testing.T) {
 		C string `json:"c" gqlexclude:"c"`
 	}
 
-	gqlt := ReflectGqlType("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore"))
+	gqlt := ReflectTypeFq("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore"))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -83,7 +99,7 @@ func TestFieldsWithoutJSON(t *testing.T) {
 		B string
 	}
 
-	gqlt := ReflectGqlType("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore"))
+	gqlt := ReflectTypeFq("s", reflect.TypeOf(S{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore"))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -121,7 +137,7 @@ func TestDatatypes(t *testing.T) {
 		Time       time.Time  `json:"time"`
 	}
 
-	gqlt := ReflectGqlType("data_types", reflect.TypeOf(DataTypes{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	gqlt := ReflectTypeFq("data_types", reflect.TypeOf(DataTypes{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -214,7 +230,7 @@ func TestComplexStruct(t *testing.T) {
 		C1       int      `json:"c1" gqlexclude:"ignore_me2,ignore_me,ignore_me3"`
 	}
 
-	gqlt := ReflectGqlType("t", reflect.TypeOf(T{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore_me"))
+	gqlt := ReflectTypeFq("t", reflect.TypeOf(T{}), GetDefaultTypeMap(), ExcludeFieldTag("ignore_me"))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -286,7 +302,7 @@ func TestComplexStruct(t *testing.T) {
 }
 
 func TestArray(t *testing.T) {
-	gqlt := ReflectGqlType("a", reflect.TypeOf([]string{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	gqlt := ReflectTypeFq("a", reflect.TypeOf([]string{}), GetDefaultTypeMap(), ExcludeFieldTag(""))
 	f := graphql.Field{
 		Type: gqlt,
 		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
