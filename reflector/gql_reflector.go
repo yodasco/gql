@@ -21,6 +21,19 @@ func ReflectGqlType(name GqlName, t reflect.Type, typeMap TypeMap, exclude Exclu
 		return gqlType
 	}
 	switch t.Kind() {
+	case reflect.String:
+		return graphql.String
+	case reflect.Interface:
+		// for interfaces assume type String. Correct assumption?
+		return graphql.String
+	case reflect.Bool:
+		return graphql.Boolean
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
+		reflect.Uint64:
+		return graphql.Int
+	case reflect.Float32, reflect.Float64:
+		return graphql.Float
 	case reflect.Struct:
 		fields := make(graphql.Fields)
 		for i := 0; i < t.NumField(); i++ {
@@ -96,14 +109,11 @@ func GetFieldFirstTag(field reflect.StructField, tag string) string {
 // If doesn't exist - return String as default
 func getGqlType(t reflect.Type, typeMap TypeMap) graphql.Output {
 	m, exists := typeMap[t]
-	if !exists {
-		// When type does not exist - for interfaces assume type String, for the rest - doesn't exist
-		if t.Kind() == reflect.Interface {
-			return graphql.String
-		}
-		return nil
+	if exists {
+		return m.Output
 	}
-	return m.Output
+	// no predefined output in the map
+	return nil
 }
 
 func getResolver(t reflect.Type, typeMap TypeMap) graphql.FieldResolveFn {

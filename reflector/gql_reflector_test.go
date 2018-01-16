@@ -25,6 +25,18 @@ func TestBasicType(t *testing.T) {
 	assertQuery(t, f, "s", "", `{"data":{"s": 6}}`, "")
 }
 
+func TestStringKind(t *testing.T) {
+	type stringKind string
+	s := stringKind("sss")
+	gqlt := ReflectGqlType("a", reflect.TypeOf(s), GetDefaultTypeMap(), ExcludeFieldTag(""))
+	f := graphql.Field{
+		Type: gqlt,
+		Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			return s, nil
+		},
+	}
+	assertQuery(t, f, "s", "", `{"data":{"s": "sss"}}`, "")
+}
 func TestSimpleStruct(t *testing.T) {
 	type S struct {
 		A string `json:"a"`
