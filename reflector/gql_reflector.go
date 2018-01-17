@@ -30,6 +30,21 @@ func ReflectType(instance interface{}) graphql.Type {
 	)
 }
 
+// ReflectTypeWithTypeMap is a shorthand to invoking ReflectTypeEq with
+// reasonable default values and your own provided type map.
+func ReflectTypeWithTypeMap(instance interface{}, typeMap TypeMap) graphql.Type {
+	if instance == nil {
+		panic("Cannot infer type of nil instance")
+	}
+	t := reflect.TypeOf(instance)
+	return ReflectTypeFq(
+		GqlName(t.Name()),
+		t,
+		typeMap,
+		ExcludeFieldTag(""),
+	)
+}
+
 // ReflectTypeFq (Reflect Type Fully Qualified) returns a Graphql type that
 // represents the go reflect.Type structure (recorsively)
 func ReflectTypeFq(
@@ -96,7 +111,7 @@ var gqlTypeNameOrder = 0
 
 func generateGqlOTypeName(name GqlName) string {
 	gqlTypeNameOrder++
-	return fmt.Sprintf("%s%d", name, gqlTypeNameOrder)
+	return fmt.Sprintf("%s_%d", name, gqlTypeNameOrder)
 }
 
 // Whether to include this StructField in the gql schema

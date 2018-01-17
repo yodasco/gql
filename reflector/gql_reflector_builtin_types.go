@@ -13,10 +13,17 @@ func init() {
 	defaultTypeMap = buildDefaultTypeMap()
 }
 
-func trivialResolver(p graphql.ResolveParams) (interface{}, error) {
+// GetValueFromResolveParams gets the value of p, translating a graphql construct
+// to a golang `reflect.Value`
+func GetValueFromResolveParams(p graphql.ResolveParams) reflect.Value {
 	reflected := reflect.ValueOf(p.Source)
 	fieldName := p.Info.FieldName
 	value := findFieldByTag(reflect.Indirect(reflected), "json", GqlName(fieldName))
+	return value
+}
+
+func trivialResolver(p graphql.ResolveParams) (interface{}, error) {
+	value := GetValueFromResolveParams(p)
 	return value.Interface(), nil
 }
 
@@ -34,9 +41,7 @@ func findFieldByTag(v reflect.Value, tagName string, fieldName GqlName) reflect.
 
 // Format time as string in RFC3339
 func timeResolver(p graphql.ResolveParams) (interface{}, error) {
-	reflected := reflect.ValueOf(p.Source)
-	fieldName := p.Info.FieldName
-	value := findFieldByTag(reflect.Indirect(reflected), "json", GqlName(fieldName))
+	value := GetValueFromResolveParams(p)
 	t := value.Interface().(time.Time)
 	return t.UTC().Format(time.RFC3339), nil
 }
