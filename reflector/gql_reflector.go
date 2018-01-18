@@ -72,14 +72,7 @@ func ReflectTypeFq(
 	case reflect.Float32, reflect.Float64:
 		return graphql.Float
 	case reflect.Struct:
-		fields := make(graphql.Fields)
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
-			if includeField(f, exclude) {
-				name := GqlName(GetFieldFirstTag(f, "json"))
-				fields[string(name)] = ReflectGqlField(name, f.Type, typeMap, exclude)
-			}
-		}
+		fields := ReflectFieldsFq(t, typeMap, exclude)
 		return graphql.NewObject(graphql.ObjectConfig{
 			Name:   generateGqlOTypeName(name),
 			Fields: fields,
@@ -95,9 +88,36 @@ func ReflectTypeFq(
 	}
 }
 
-// ReflectGqlField returns a Graphql field that represents
+// ReflectFieldsFq returns a `graphql.Fields` map of the t struct.
+// t must of a struct
+func ReflectFieldsFq(
+	t reflect.Type,
+	typeMap TypeMap,
+	exclude ExcludeFieldTag,
+) graphql.Fields {
+	if t.Kind() != reflect.Struct {
+		panic(fmt.Sprintf(`ReflectFieldsFq can only work on struct types.
+			Received instead %s`, t.Kind()))
+	}
+	fields := make(graphql.Fields)
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if includeField(f, exclude) {
+			name := GqlName(GetFieldFirstTag(f, "json"))
+			fields[string(name)] = ReflectFieldFq(name, f.Type, typeMap, exclude)
+		}
+	}
+	return fields
+}
+
+// ReflectFieldFq returns a Graphql field that represents
 // the go reflect.Field (recorsively)
-func ReflectGqlField(name GqlName, t reflect.Type, typeMap TypeMap, exclude ExcludeFieldTag) *graphql.Field {
+func ReflectFieldFq(
+	name GqlName,
+	t reflect.Type,
+	typeMap TypeMap,
+	exclude ExcludeFieldTag,
+) *graphql.Field {
 	gqlType := ReflectTypeFq(name, t, typeMap, exclude)
 	resolver := getResolver(t, typeMap)
 	return &graphql.Field{

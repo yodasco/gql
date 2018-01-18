@@ -44,7 +44,7 @@ func resolveA(p graphql.ResolveParams) (interface{}, error) {
 
 ## ReflectTypeFq Example
 
-Create `graphql.Field` using `reflector.ReflectGqlType`
+Create `graphql.Field` using `reflector.ReflectTypeEq`, which provides more flexibility
 
 ```go
 
@@ -83,9 +83,6 @@ func GetAField() *graphql.Field {
 }
 ```
 
-
-# Common pitfalls
-
 ## Adding your own data types to the type map.
 This library supports all go built-in data types, so for example it understands that a go type of `int8` should be defined as a `graphql.Integer` etc.
 It also supports simple derived types, for example `type Email string` is defined as a `graphql.String`.
@@ -94,9 +91,12 @@ If you get the error `failed to create new schema, error: price_usd_5 fields mus
 Here's an example how to fix this:
 
 ```go
+...
     gqlt := reflector.ReflectTypeWithTypeMap(
         A{},
         getMyTypeMap())
+...
+
 
 func getMyTypeMap() reflect.TypeMap {
 	// clone a local version of the default type map and add to it
@@ -105,8 +105,8 @@ func getMyTypeMap() reflect.TypeMap {
 		typeMap[t] = outputAndResolver
 	}
 
-	// suport for sql.NullString
-	typeMap[reflect.TypeOf(sql.NullString{})] = reflector.OutputAndResolver{
+	// Add suport for sql.NullString
+	typeMap[reflect.TypeOf(sql.NullString{})] = reflector.GqlOutputAndResolver{
 		Output: graphql.String,
 		Resolver: func(p graphql.ResolveParams) (interface{}, error) {
 			value := reflector.GetValueFromResolveParams(p)
