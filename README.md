@@ -1,6 +1,9 @@
 # gql
 GraphQL utilities in Go
 
+This package adds useful utilities to be used alongside https://github.com/graphql-go/graphql
+
+
 ## ReflectType Example
 
 Create `graphql.Field` using `reflector.ReflectType`
@@ -120,3 +123,16 @@ func getMyTypeMap() reflect.TypeMap {
 }
 ```
 
+## Getting the selected fields at runtime.
+Given a graphql resolver, it is sometimes useful to be able to determine which sub-fields did the user request.
+For this we use `serving.GetSelectedFields` as in the following example:
+
+```go
+func resolver(p graphql.ResolveParams) (interface{}, error) {
+    // probable query:
+    // query{ root_query { sub_selection { sub_sub_selection { a b c} } } }
+    selectedFields := serving.GetSelectedFields([]string{"root_query", "sub_selection", "sub_sub_selection"}, p)
+    // do something based on selectedFields...
+    // selectedFields is []string{"a", "b", "c"}
+}
+```
